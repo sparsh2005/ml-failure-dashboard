@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   MetricCards,
-  ConfusionMatrixChart,
+  ConfusionMatrixDisplay,
   ConfidenceCurveChart,
   ErrorsByClassChart,
   FiltersBar,
@@ -147,7 +147,7 @@ export function Dashboard() {
             Failure Patterns
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            <ConfusionMatrixChart data={confusionMatrix} loading={loadingMatrix} />
+            <ConfusionMatrixDisplay data={confusionMatrix} loading={loadingMatrix} />
             <ConfidenceCurveChart data={confidenceCurve} loading={loadingCurve} />
             <ErrorsByClassChart data={errorsByClass} loading={loadingErrors} />
           </div>
@@ -192,4 +192,3 @@ export function Dashboard() {
     </div>
   );
 }
-
