@@ -1,10 +1,9 @@
-"""FastAPI application for ML Failure Analysis Dashboard."""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from .api.routes import router as api_router
+from .api import router
 
 
 # Create FastAPI app
@@ -14,39 +13,37 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS configuration - allow frontend origins
-origins = [
-    "http://localhost:5173",  # Vite default
-    "http://localhost:5174",  # Vite alternative port
-    "http://localhost:3000",  # Common dev port
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
-]
-
+# Configure CORS for frontend development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[
+        "http://localhost:5173",  # Vite default
+        "http://localhost:5174",  # Vite alternate
+        "http://localhost:3000",  # Common React port
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Mount static files for images
+# Mount static files for serving images
 static_dir = Path(__file__).parent / "static"
-static_dir.mkdir(exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # Include API router
-app.include_router(api_router)
+app.include_router(router)
 
 
 @app.get("/")
 async def root():
-    """Root endpoint with API info."""
+    """Root endpoint with API information"""
     return {
-        "name": "ML Failure Analysis Dashboard API",
-        "version": "1.0.0",
+        "message": "ML Failure Analysis Dashboard API",
         "docs": "/docs",
+        "redoc": "/redoc",
         "endpoints": {
             "overview": "/api/overview",
             "confusion_matrix": "/api/confusion-matrix",
@@ -60,6 +57,6 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
+    """Health check endpoint"""
     return {"status": "healthy"}
 

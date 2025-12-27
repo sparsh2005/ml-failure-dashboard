@@ -1,6 +1,5 @@
-"""Pydantic models mirroring frontend types."""
-from typing import List, Optional
 from pydantic import BaseModel, Field
+from typing import Optional
 from enum import Enum
 
 
@@ -19,126 +18,92 @@ CIFAR10_LABELS = [
 ]
 
 
-class ErrorType(str, Enum):
-    """Type of prediction error."""
-    LOW_CONFIDENCE = "low_confidence"
-    HIGH_CONFIDENCE = "high_confidence"
-
-
 class SortOrder(str, Enum):
-    """Sort order for predictions."""
     CONFIDENCE_DESC = "confidence_desc"
     CONFIDENCE_ASC = "confidence_asc"
 
 
-# ============ Overview Metrics ============
-
 class OverviewMetrics(BaseModel):
-    """Model overview metrics."""
-    model_name: str = Field(..., alias="modelName")
-    dataset_name: str = Field(..., alias="datasetName")
-    total_samples: int = Field(..., alias="totalSamples")
-    accuracy: float
-    precision: float
-    recall: float
-    f1_score: float = Field(..., alias="f1Score")
-    avg_confidence: float = Field(..., alias="avgConfidence")
+    """Model overview and performance metrics"""
+    modelName: str = Field(..., description="Name of the model")
+    datasetName: str = Field(..., description="Name of the dataset")
+    totalSamples: int = Field(..., description="Total number of samples")
+    accuracy: float = Field(..., ge=0, le=1, description="Overall accuracy")
+    precision: float = Field(..., ge=0, le=1, description="Macro precision")
+    recall: float = Field(..., ge=0, le=1, description="Macro recall")
+    f1Score: float = Field(..., ge=0, le=1, description="Macro F1 score")
+    avgConfidence: float = Field(..., ge=0, le=1, description="Average confidence")
     # Failure breakdown percentages
-    correct_confident: float = Field(..., alias="correctConfident")
-    correct_unsure: float = Field(..., alias="correctUnsure")
-    wrong_unsure: float = Field(..., alias="wrongUnsure")
-    wrong_confident: float = Field(..., alias="wrongConfident")
-    total_failures: int = Field(..., alias="totalFailures")
+    correctConfident: float = Field(..., description="% correct with high confidence")
+    correctUnsure: float = Field(..., description="% correct with low confidence")
+    wrongUnsure: float = Field(..., description="% wrong with low confidence")
+    wrongConfident: float = Field(..., description="% wrong with high confidence (dangerous)")
+    totalFailures: int = Field(..., description="Total number of failures")
 
-    class Config:
-        populate_by_name = True
-
-
-# ============ Confusion Matrix ============
 
 class ConfusionMatrix(BaseModel):
-    """Confusion matrix data."""
-    labels: List[str]
-    matrix: List[List[int]]
+    """Confusion matrix data"""
+    labels: list[str] = Field(..., description="Class labels")
+    matrix: list[list[int]] = Field(..., description="Confusion matrix values")
 
-
-# ============ Confidence Curve ============
 
 class ConfidenceCurvePoint(BaseModel):
-    """Single point in confidence vs correctness curve."""
-    confidence_bucket: str = Field(..., alias="confidenceBucket")
-    confidence_min: float = Field(..., alias="confidenceMin")
-    confidence_max: float = Field(..., alias="confidenceMax")
-    total_count: int = Field(..., alias="totalCount")
-    correct_count: int = Field(..., alias="correctCount")
-    incorrect_count: int = Field(..., alias="incorrectCount")
-    accuracy_in_bucket: float = Field(..., alias="accuracyInBucket")
+    """Single point on the confidence vs correctness curve"""
+    confidenceBucket: str = Field(..., description="Bucket label (e.g., '0.0-0.1')")
+    confidenceMin: float = Field(..., ge=0, le=1)
+    confidenceMax: float = Field(..., ge=0, le=1)
+    totalCount: int = Field(..., ge=0)
+    correctCount: int = Field(..., ge=0)
+    incorrectCount: int = Field(..., ge=0)
+    accuracyInBucket: float = Field(..., ge=0, le=1)
 
-    class Config:
-        populate_by_name = True
-
-
-# ============ Errors by Class ============
 
 class ErrorByClass(BaseModel):
-    """Error statistics for a single class."""
-    class_name: str = Field(..., alias="className")
-    total_samples: int = Field(..., alias="totalSamples")
-    correct_count: int = Field(..., alias="correctCount")
-    error_count: int = Field(..., alias="errorCount")
-    error_rate: float = Field(..., alias="errorRate")
-    avg_confidence_on_errors: float = Field(..., alias="avgConfidenceOnErrors")
+    """Error distribution for a single class"""
+    className: str = Field(..., description="Class name")
+    totalSamples: int = Field(..., ge=0)
+    correctCount: int = Field(..., ge=0)
+    errorCount: int = Field(..., ge=0)
+    errorRate: float = Field(..., ge=0, le=1)
+    avgConfidenceOnErrors: float = Field(..., ge=0, le=1)
 
-    class Config:
-        populate_by_name = True
-
-
-# ============ Prediction Records ============
 
 class TopPrediction(BaseModel):
-    """Top-k prediction entry."""
+    """Top-k prediction entry"""
     label: str
-    probability: float
+    probability: float = Field(..., ge=0, le=1)
 
 
 class PredictionRecord(BaseModel):
-    """Individual prediction record."""
-    id: str
-    image_url: str = Field(..., alias="imageUrl")
-    true_label: str = Field(..., alias="trueLabel")
-    predicted_label: str = Field(..., alias="predictedLabel")
-    confidence: float
-    is_correct: bool = Field(..., alias="isCorrect")
-    is_high_confidence_error: bool = Field(..., alias="isHighConfidenceError")
-    top_predictions: List[TopPrediction] = Field(..., alias="topPredictions")
-
-    class Config:
-        populate_by_name = True
+    """Individual prediction record"""
+    id: str = Field(..., description="Unique identifier")
+    imageUrl: str = Field(..., description="URL or path to image")
+    trueLabel: str = Field(..., description="Ground truth label")
+    predictedLabel: str = Field(..., description="Model's prediction")
+    confidence: float = Field(..., ge=0, le=1, description="Prediction confidence")
+    isCorrect: bool = Field(..., description="Whether prediction was correct")
+    isHighConfidenceError: bool = Field(..., description="High confidence but wrong")
+    topPredictions: list[TopPrediction] = Field(..., description="Top-k predictions")
 
 
 class PaginatedPredictions(BaseModel):
-    """Paginated predictions response."""
-    predictions: List[PredictionRecord]
-    total: int
-    page: int
-    page_size: int = Field(..., alias="pageSize")
-    total_pages: int = Field(..., alias="totalPages")
-
-    class Config:
-        populate_by_name = True
+    """Paginated list of predictions"""
+    predictions: list[PredictionRecord]
+    total: int = Field(..., ge=0, description="Total matching records")
+    page: int = Field(..., ge=1, description="Current page number")
+    pageSize: int = Field(..., ge=1, description="Items per page")
+    totalPages: int = Field(..., ge=0, description="Total number of pages")
 
 
-# ============ Query Parameters ============
-
-class PredictionQueryParams(BaseModel):
-    """Query parameters for predictions endpoint."""
-    only_errors: bool = False
-    only_high_confidence_errors: bool = False
-    true_label: Optional[str] = None
-    predicted_label: Optional[str] = None
-    min_confidence: Optional[float] = None
-    max_confidence: Optional[float] = None
-    page: int = 1
-    page_size: int = 10
-    sort: SortOrder = SortOrder.CONFIDENCE_DESC
+class PredictionFilters(BaseModel):
+    """Filter options for predictions query"""
+    trueLabel: Optional[str] = None
+    predictedLabel: Optional[str] = None
+    minConfidence: Optional[float] = Field(None, ge=0, le=1)
+    maxConfidence: Optional[float] = Field(None, ge=0, le=1)
+    onlyErrors: Optional[bool] = None
+    onlyHighConfidenceErrors: Optional[bool] = None
+    page: int = Field(1, ge=1)
+    pageSize: int = Field(10, ge=1, le=100)
+    sort: Optional[SortOrder] = None
 

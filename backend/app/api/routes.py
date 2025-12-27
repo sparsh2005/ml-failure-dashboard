@@ -1,9 +1,7 @@
-"""API routes for ML Failure Analysis Dashboard."""
-import math
-from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, Depends
+from typing import Optional
 
-from ..models.schemas import (
+from ..models import (
     OverviewMetrics,
     ConfusionMatrix,
     ConfidenceCurvePoint,
@@ -12,10 +10,10 @@ from ..models.schemas import (
     PaginatedPredictions,
     SortOrder
 )
-from ..services.data_store import DataStore, get_data_store
+from ..services import DataStore, get_data_store
 
 
-router = APIRouter(prefix="/api", tags=["api"])
+router = APIRouter(prefix="/api", tags=["ML Analysis"])
 
 
 @router.get("/overview", response_model=OverviewMetrics)
@@ -23,10 +21,8 @@ async def get_overview(
     data_store: DataStore = Depends(get_data_store)
 ) -> OverviewMetrics:
     """
-    Get model overview metrics.
-    
-    Returns accuracy, precision, recall, F1, avg confidence,
-    and failure breakdown percentages.
+    Get model overview metrics including accuracy, precision, recall,
+    and failure breakdown statistics.
     """
     try:
         return data_store.get_overview()
@@ -39,10 +35,8 @@ async def get_confusion_matrix(
     data_store: DataStore = Depends(get_data_store)
 ) -> ConfusionMatrix:
     """
-    Get confusion matrix data.
-    
-    Returns matrix where matrix[i][j] = count of samples
-    with true label i predicted as label j.
+    Get the confusion matrix showing prediction distributions
+    across all classes.
     """
     try:
         return data_store.get_confusion_matrix()
@@ -55,9 +49,8 @@ async def get_confidence_curve(
     data_store: DataStore = Depends(get_data_store)
 ) -> list[ConfidenceCurvePoint]:
     """
-    Get confidence vs correctness curve data.
-    
-    Returns accuracy per confidence bin to assess model calibration.
+    Get the confidence vs correctness curve data showing
+    accuracy per confidence bucket.
     """
     try:
         return data_store.get_confidence_curve()
@@ -70,9 +63,7 @@ async def get_errors_by_class(
     data_store: DataStore = Depends(get_data_store)
 ) -> list[ErrorByClass]:
     """
-    Get error distribution by class.
-    
-    Returns error counts and rates for each class.
+    Get error distribution statistics for each class.
     """
     try:
         return data_store.get_errors_by_class()
@@ -82,52 +73,42 @@ async def get_errors_by_class(
 
 @router.get("/predictions", response_model=PaginatedPredictions)
 async def get_predictions(
-    only_errors: bool = Query(False, description="Filter to only incorrect predictions"),
-    only_high_confidence_errors: bool = Query(False, description="Filter to only high-confidence errors"),
+    only_errors: bool = Query(False, description="Filter to only show incorrect predictions"),
     true_label: Optional[str] = Query(None, description="Filter by true label"),
     pred_label: Optional[str] = Query(None, description="Filter by predicted label"),
     min_conf: Optional[float] = Query(None, ge=0, le=1, description="Minimum confidence"),
     max_conf: Optional[float] = Query(None, ge=0, le=1, description="Maximum confidence"),
+    only_high_confidence_errors: bool = Query(False, description="Show only high confidence errors"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Items per page"),
-    sort: SortOrder = Query(SortOrder.CONFIDENCE_DESC, description="Sort order"),
+    sort: Optional[SortOrder] = Query(None, description="Sort order"),
     data_store: DataStore = Depends(get_data_store)
 ) -> PaginatedPredictions:
     """
-    Get paginated prediction records with filters.
+    Get paginated predictions with optional filtering and sorting.
     
     Supports filtering by:
-    - only_errors: show only incorrect predictions
-    - only_high_confidence_errors: show only dangerous (high confidence + wrong) errors
-    - true_label: filter by ground truth label
-    - pred_label: filter by predicted label  
-    - min_conf/max_conf: filter by confidence range
+    - only_errors: Show only incorrect predictions
+    - true_label: Filter by ground truth label
+    - pred_label: Filter by predicted label
+    - min_conf/max_conf: Filter by confidence range
+    - only_high_confidence_errors: Show only confident but wrong predictions
     
     Supports sorting by:
-    - confidence_desc: highest confidence first
-    - confidence_asc: lowest confidence first
+    - confidence_desc: Highest confidence first
+    - confidence_asc: Lowest confidence first
     """
     try:
-        predictions, total = data_store.query_predictions(
+        return data_store.get_predictions(
             only_errors=only_errors,
-            only_high_confidence_errors=only_high_confidence_errors,
             true_label=true_label,
-            predicted_label=pred_label,
-            min_confidence=min_conf,
-            max_confidence=max_conf,
-            sort=sort,
+            pred_label=pred_label,
+            min_conf=min_conf,
+            max_conf=max_conf,
+            only_high_confidence_errors=only_high_confidence_errors,
             page=page,
-            page_size=page_size
-        )
-        
-        total_pages = math.ceil(total / page_size) if total > 0 else 1
-        
-        return PaginatedPredictions(
-            predictions=predictions,
-            total=total,
-            page=page,
-            pageSize=page_size,
-            totalPages=total_pages
+            page_size=page_size,
+            sort=sort
         )
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -139,7 +120,7 @@ async def get_prediction_by_id(
     data_store: DataStore = Depends(get_data_store)
 ) -> PredictionRecord:
     """
-    Get a single prediction record by ID.
+    Get a single prediction by its ID.
     """
     try:
         prediction = data_store.get_prediction_by_id(prediction_id)

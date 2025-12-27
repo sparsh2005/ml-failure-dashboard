@@ -1,2 +1,2 @@
-# Backend app package
+# ML Failure Analysis Dashboard - Backend
 
