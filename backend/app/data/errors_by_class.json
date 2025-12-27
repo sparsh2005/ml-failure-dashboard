@@ -1,0 +1,13 @@
+[
+  {"className": "airplane", "totalSamples": 1000, "correctCount": 912, "errorCount": 88, "errorRate": 0.088, "avgConfidenceOnErrors": 0.52},
+  {"className": "automobile", "totalSamples": 1000, "correctCount": 948, "errorCount": 52, "errorRate": 0.052, "avgConfidenceOnErrors": 0.61},
+  {"className": "bird", "totalSamples": 1000, "correctCount": 842, "errorCount": 158, "errorRate": 0.158, "avgConfidenceOnErrors": 0.48},
+  {"className": "cat", "totalSamples": 1000, "correctCount": 798, "errorCount": 202, "errorRate": 0.202, "avgConfidenceOnErrors": 0.54},
+  {"className": "deer", "totalSamples": 1000, "correctCount": 876, "errorCount": 124, "errorRate": 0.124, "avgConfidenceOnErrors": 0.45},
+  {"className": "dog", "totalSamples": 1000, "correctCount": 802, "errorCount": 198, "errorRate": 0.198, "avgConfidenceOnErrors": 0.58},
+  {"className": "frog", "totalSamples": 1000, "correctCount": 896, "errorCount": 104, "errorRate": 0.104, "avgConfidenceOnErrors": 0.42},
+  {"className": "horse", "totalSamples": 1000, "correctCount": 878, "errorCount": 122, "errorRate": 0.122, "avgConfidenceOnErrors": 0.51},
+  {"className": "ship", "totalSamples": 1000, "correctCount": 918, "errorCount": 82, "errorRate": 0.082, "avgConfidenceOnErrors": 0.55},
+  {"className": "truck", "totalSamples": 1000, "correctCount": 904, "errorCount": 96, "errorRate": 0.096, "avgConfidenceOnErrors": 0.63}
+]
+
