@@ -20,24 +20,23 @@ pip install -r requirements.txt
 python -m app.services.evaluator
 
 # Options:
-#   --epochs 10          Training epochs (default: 10)
+#   --epochs 3           Training epochs (default: 3)
 #   --seed 42            Random seed for reproducibility (default: 42)
-#   --batch-size 128     Batch size (default: 128)
-#   --force-retrain      Force retrain even if model exists
-#   --no-save-images     Skip saving test images (faster)
-#   --max-samples 10000  Max samples to evaluate (default: 10000)
+#   --no-images          Skip saving test images (faster, use if images exist)
+#   --output-dir PATH    Custom output directory for artifacts
 ```
 
 This will:
-- Train a SimpleCNN on CIFAR-10 (~85% accuracy in 10 epochs)
+- Train a SimpleCNN on CIFAR-10 (~70% accuracy in 3 epochs)
 - Evaluate on the test set (10,000 images)
 - Generate artifacts in `app/data/`:
-  - `overview.json` - Model metrics
+  - `labels.json` - CIFAR-10 class labels
+  - `overview.json` - Model metrics & failure breakdown
   - `confusion_matrix.json` - 10x10 confusion matrix
   - `confidence_curve.json` - Accuracy per confidence bin
   - `errors_by_class.json` - Error distribution by class
-  - `predictions.jsonl` - All prediction records
-- Save test images to `app/static/images/test/`
+  - `predictions.jsonl` - All 10,000 prediction records
+- Save test images to `app/static/images/test/` (use `--no-images` to skip)
 
 ### 3. Start the API Server
 
@@ -109,15 +108,20 @@ If you want to skip training and use pre-generated mock data:
 To regenerate artifacts with different settings:
 
 ```bash
-# Quick evaluation (fewer epochs)
+# Quick evaluation (fewer epochs, lower accuracy but faster)
+python -m app.services.evaluator --epochs 1
+
+# Higher accuracy (more epochs)
 python -m app.services.evaluator --epochs 5
 
-# Force retrain existing model
-python -m app.services.evaluator --force-retrain
+# Skip image saving (faster if images already exist)
+python -m app.services.evaluator --no-images
 
-# Skip image saving (faster)
-python -m app.services.evaluator --no-save-images
+# Different random seed
+python -m app.services.evaluator --seed 123
 ```
+
+**Note:** The model uses `conf_threshold=0.8` to label `isHighConfidenceError` (predictions where confidence ≥ 0.8 but wrong).
 
 ## Connecting to Frontend
 

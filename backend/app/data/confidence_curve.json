@@ -3,82 +3,81 @@
     "confidenceBucket": "0.0-0.2",
     "confidenceMin": 0.0,
     "confidenceMax": 0.2,
-    "totalCount": 89,
-    "correctCount": 18,
-    "incorrectCount": 71,
-    "accuracyInBucket": 0.202
+    "totalCount": 40,
+    "correctCount": 7,
+    "incorrectCount": 33,
+    "accuracyInBucket": 0.175
   },
   {
     "confidenceBucket": "0.2-0.3",
     "confidenceMin": 0.2,
     "confidenceMax": 0.3,
-    "totalCount": 156,
-    "correctCount": 52,
-    "incorrectCount": 104,
-    "accuracyInBucket": 0.333
+    "totalCount": 501,
+    "correctCount": 148,
+    "incorrectCount": 353,
+    "accuracyInBucket": 0.295
   },
   {
     "confidenceBucket": "0.3-0.4",
     "confidenceMin": 0.3,
     "confidenceMax": 0.4,
-    "totalCount": 312,
-    "correctCount": 134,
-    "incorrectCount": 178,
-    "accuracyInBucket": 0.429
+    "totalCount": 1050,
+    "correctCount": 383,
+    "incorrectCount": 667,
+    "accuracyInBucket": 0.365
   },
   {
     "confidenceBucket": "0.4-0.5",
     "confidenceMin": 0.4,
     "confidenceMax": 0.5,
-    "totalCount": 524,
-    "correctCount": 283,
-    "incorrectCount": 241,
-    "accuracyInBucket": 0.540
+    "totalCount": 1304,
+    "correctCount": 648,
+    "incorrectCount": 656,
+    "accuracyInBucket": 0.497
   },
   {
     "confidenceBucket": "0.5-0.6",
     "confidenceMin": 0.5,
     "confidenceMax": 0.6,
-    "totalCount": 687,
-    "correctCount": 446,
-    "incorrectCount": 241,
-    "accuracyInBucket": 0.649
+    "totalCount": 1339,
+    "correctCount": 763,
+    "incorrectCount": 576,
+    "accuracyInBucket": 0.57
   },
   {
     "confidenceBucket": "0.6-0.7",
     "confidenceMin": 0.6,
     "confidenceMax": 0.7,
-    "totalCount": 1023,
-    "correctCount": 778,
-    "incorrectCount": 245,
-    "accuracyInBucket": 0.760
+    "totalCount": 1171,
+    "correctCount": 803,
+    "incorrectCount": 368,
+    "accuracyInBucket": 0.686
   },
   {
     "confidenceBucket": "0.7-0.8",
     "confidenceMin": 0.7,
     "confidenceMax": 0.8,
-    "totalCount": 1456,
-    "correctCount": 1281,
-    "incorrectCount": 175,
-    "accuracyInBucket": 0.880
+    "totalCount": 1062,
+    "correctCount": 819,
+    "incorrectCount": 243,
+    "accuracyInBucket": 0.771
   },
   {
     "confidenceBucket": "0.8-0.9",
     "confidenceMin": 0.8,
     "confidenceMax": 0.9,
-    "totalCount": 2234,
-    "correctCount": 2078,
-    "incorrectCount": 156,
-    "accuracyInBucket": 0.930
+    "totalCount": 1261,
+    "correctCount": 1107,
+    "incorrectCount": 154,
+    "accuracyInBucket": 0.878
   },
   {
     "confidenceBucket": "0.9-1.0",
     "confidenceMin": 0.9,
     "confidenceMax": 1.0,
-    "totalCount": 3519,
-    "correctCount": 3377,
-    "incorrectCount": 142,
-    "accuracyInBucket": 0.960
+    "totalCount": 2272,
+    "correctCount": 2204,
+    "incorrectCount": 68,
+    "accuracyInBucket": 0.97
   }
 ]
-
