@@ -23,6 +23,11 @@ class SortOrder(str, Enum):
     CONFIDENCE_ASC = "confidence_asc"
 
 
+class ExportFormat(str, Enum):
+    CSV = "csv"
+    JSONL = "jsonl"
+
+
 class OverviewMetrics(BaseModel):
     """Model overview and performance metrics"""
     modelName: str = Field(..., description="Name of the model")
@@ -106,4 +111,18 @@ class PredictionFilters(BaseModel):
     page: int = Field(1, ge=1)
     pageSize: int = Field(10, ge=1, le=100)
     sort: Optional[SortOrder] = None
+
+
+class CalibrationBin(BaseModel):
+    """Single bin in calibration data"""
+    range: list[float] = Field(..., description="[min, max] confidence range")
+    count: int = Field(..., ge=0, description="Number of samples in bin")
+    avgConf: float = Field(..., ge=0, le=1, description="Average confidence in bin")
+    accuracy: float = Field(..., ge=0, le=1, description="Accuracy in bin")
+
+
+class CalibrationData(BaseModel):
+    """Calibration metrics including ECE and bins"""
+    ece: float = Field(..., ge=0, le=1, description="Expected Calibration Error")
+    bins: list[CalibrationBin] = Field(..., description="Calibration bins")
 

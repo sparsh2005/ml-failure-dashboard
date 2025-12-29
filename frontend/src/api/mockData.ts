@@ -3,7 +3,8 @@ import type {
   ConfusionMatrix,
   ConfidenceCurve,
   ErrorsByClass,
-  PredictionRecord
+  PredictionRecord,
+  CalibrationData
 } from './types';
 import { CIFAR10_LABELS } from './types';
 
@@ -150,6 +151,23 @@ export const mockErrorsByClass: ErrorsByClass = [
   { className: 'ship', totalSamples: 1000, correctCount: 918, errorCount: 82, errorRate: 0.082, avgConfidenceOnErrors: 0.55 },
   { className: 'truck', totalSamples: 1000, correctCount: 904, errorCount: 96, errorRate: 0.096, avgConfidenceOnErrors: 0.63 }
 ];
+
+// Calibration data for reliability diagram
+export const mockCalibrationData: CalibrationData = {
+  ece: 0.0423,  // Expected Calibration Error
+  bins: [
+    { range: [0.0, 0.1], count: 45, avgConf: 0.068, accuracy: 0.156 },
+    { range: [0.1, 0.2], count: 89, avgConf: 0.157, accuracy: 0.225 },
+    { range: [0.2, 0.3], count: 156, avgConf: 0.252, accuracy: 0.333 },
+    { range: [0.3, 0.4], count: 312, avgConf: 0.349, accuracy: 0.429 },
+    { range: [0.4, 0.5], count: 524, avgConf: 0.451, accuracy: 0.540 },
+    { range: [0.5, 0.6], count: 687, avgConf: 0.553, accuracy: 0.649 },
+    { range: [0.6, 0.7], count: 1023, avgConf: 0.648, accuracy: 0.760 },
+    { range: [0.7, 0.8], count: 1456, avgConf: 0.752, accuracy: 0.880 },
+    { range: [0.8, 0.9], count: 2234, avgConf: 0.849, accuracy: 0.930 },
+    { range: [0.9, 1.0], count: 3519, avgConf: 0.951, accuracy: 0.960 }
+  ]
+};
 
 // Generate a placeholder colored image based on class
 function generatePlaceholderImage(className: string): string {

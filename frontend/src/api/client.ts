@@ -5,7 +5,9 @@ import type {
   ErrorsByClass,
   PredictionRecord,
   PaginatedPredictions,
-  PredictionFilters
+  PredictionFilters,
+  CalibrationData,
+  ExportFormat
 } from './types';
 
 import {
@@ -14,7 +16,8 @@ import {
   mockConfidenceCurve,
   mockErrorsByClass,
   mockPredictions,
-  getMockPaginatedPredictions
+  getMockPaginatedPredictions,
+  mockCalibrationData
 } from './mockData';
 
 // Toggle between mock data and real backend
@@ -93,9 +96,9 @@ export async function getPredictions(filters?: PredictionFilters): Promise<Pagin
   const params = new URLSearchParams();
   if (filters) {
     if (filters.trueLabel) params.set('true_label', filters.trueLabel);
-    if (filters.predictedLabel) params.set('predicted_label', filters.predictedLabel);
-    if (filters.minConfidence !== undefined) params.set('min_confidence', filters.minConfidence.toString());
-    if (filters.maxConfidence !== undefined) params.set('max_confidence', filters.maxConfidence.toString());
+    if (filters.predictedLabel) params.set('pred_label', filters.predictedLabel);
+    if (filters.minConfidence !== undefined) params.set('min_conf', filters.minConfidence.toString());
+    if (filters.maxConfidence !== undefined) params.set('max_conf', filters.maxConfidence.toString());
     if (filters.onlyErrors) params.set('only_errors', 'true');
     if (filters.onlyHighConfidenceErrors) params.set('only_high_confidence_errors', 'true');
     if (filters.page) params.set('page', filters.page.toString());
@@ -116,5 +119,43 @@ export async function getPredictionById(id: string): Promise<PredictionRecord | 
   }
   
   return fetchApi<PredictionRecord>(`/api/predictions/${id}`);
+}
+
+// Get calibration data (ECE and reliability bins)
+export async function getCalibration(bins: number = 10): Promise<CalibrationData> {
+  if (USE_MOCKS) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return mockCalibrationData;
+  }
+  
+  return fetchApi<CalibrationData>(`/api/calibration?bins=${bins}`);
+}
+
+// Build export URL with filters
+export function getExportUrl(format: ExportFormat, filters?: PredictionFilters): string {
+  const params = new URLSearchParams();
+  params.set('format', format);
+  
+  if (filters) {
+    if (filters.trueLabel) params.set('true_label', filters.trueLabel);
+    if (filters.predictedLabel) params.set('pred_label', filters.predictedLabel);
+    if (filters.minConfidence !== undefined) params.set('min_conf', filters.minConfidence.toString());
+    if (filters.maxConfidence !== undefined) params.set('max_conf', filters.maxConfidence.toString());
+    if (filters.onlyErrors) params.set('only_errors', 'true');
+    if (filters.onlyHighConfidenceErrors) params.set('only_high_confidence_errors', 'true');
+  }
+  
+  return `${API_BASE}/api/export?${params.toString()}`;
+}
+
+// Trigger download of exported predictions
+export function downloadExport(format: ExportFormat, filters?: PredictionFilters): void {
+  const url = getExportUrl(format, filters);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `predictions.${format === 'csv' ? 'csv' : 'jsonl'}`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 

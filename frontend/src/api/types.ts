@@ -99,3 +99,20 @@ export interface PredictionFilters {
   pageSize?: number;
 }
 
+// Calibration bin for reliability diagram
+export interface CalibrationBin {
+  range: [number, number];  // [min, max] confidence range
+  count: number;
+  avgConf: number;
+  accuracy: number;
+}
+
+// Calibration data with ECE
+export interface CalibrationData {
+  ece: number;  // Expected Calibration Error
+  bins: CalibrationBin[];
+}
+
+// Export format options
+export type ExportFormat = 'csv' | 'jsonl';
+

@@ -10,7 +10,9 @@ from ..models import (
     ErrorByClass,
     PredictionRecord,
     PaginatedPredictions,
-    SortOrder
+    SortOrder,
+    CalibrationData,
+    CalibrationBin
 )
 
 
@@ -28,6 +30,7 @@ class DataStore:
         self._errors_by_class: Optional[list[ErrorByClass]] = None
         self._predictions: Optional[list[PredictionRecord]] = None
         self._predictions_by_id: Optional[dict[str, PredictionRecord]] = None
+        self._calibration: Optional[CalibrationData] = None
     
     def _load_json(self, filename: str) -> dict | list:
         """Load JSON file from data directory"""
@@ -77,6 +80,14 @@ class DataStore:
             data = self._load_json("errors_by_class.json")
             self._errors_by_class = [ErrorByClass(**item) for item in data]
         return self._errors_by_class
+    
+    def get_calibration(self) -> CalibrationData:
+        """Get cached calibration data (ECE and reliability bins)"""
+        if self._calibration is None:
+            data = self._load_json("calibration.json")
+            bins = [CalibrationBin(**b) for b in data["bins"]]
+            self._calibration = CalibrationData(ece=data["ece"], bins=bins)
+        return self._calibration
     
     def _load_predictions(self) -> None:
         """Load and cache all predictions"""
@@ -148,6 +159,49 @@ class DataStore:
             totalPages=total_pages
         )
     
+    def get_filtered_predictions(
+        self,
+        only_errors: bool = False,
+        true_label: Optional[str] = None,
+        pred_label: Optional[str] = None,
+        min_conf: Optional[float] = None,
+        max_conf: Optional[float] = None,
+        only_high_confidence_errors: bool = False,
+        sort: Optional[SortOrder] = None
+    ) -> list[PredictionRecord]:
+        """Get filtered predictions without pagination (for export)"""
+        self._load_predictions()
+        
+        # Start with all predictions
+        filtered = list(self._predictions)
+        
+        # Apply filters
+        if only_errors:
+            filtered = [p for p in filtered if not p.isCorrect]
+        
+        if only_high_confidence_errors:
+            filtered = [p for p in filtered if p.isHighConfidenceError]
+        
+        if true_label:
+            filtered = [p for p in filtered if p.trueLabel == true_label]
+        
+        if pred_label:
+            filtered = [p for p in filtered if p.predictedLabel == pred_label]
+        
+        if min_conf is not None:
+            filtered = [p for p in filtered if p.confidence >= min_conf]
+        
+        if max_conf is not None:
+            filtered = [p for p in filtered if p.confidence <= max_conf]
+        
+        # Apply sorting
+        if sort == SortOrder.CONFIDENCE_DESC:
+            filtered.sort(key=lambda p: p.confidence, reverse=True)
+        elif sort == SortOrder.CONFIDENCE_ASC:
+            filtered.sort(key=lambda p: p.confidence, reverse=False)
+        
+        return filtered
+    
     def reload(self) -> None:
         """Clear cache and reload all data"""
         self._overview = None
@@ -156,6 +210,7 @@ class DataStore:
         self._errors_by_class = None
         self._predictions = None
         self._predictions_by_id = None
+        self._calibration = None
 
 
 # Singleton instance

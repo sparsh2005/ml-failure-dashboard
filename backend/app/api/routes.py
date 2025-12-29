@@ -1,4 +1,9 @@
+import csv
+import io
+import json
+
 from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi.responses import StreamingResponse
 from typing import Optional
 
 from ..models import (
@@ -8,7 +13,9 @@ from ..models import (
     ErrorByClass,
     PredictionRecord,
     PaginatedPredictions,
-    SortOrder
+    SortOrder,
+    ExportFormat,
+    CalibrationData
 )
 from ..services import DataStore, get_data_store
 
@@ -127,6 +134,94 @@ async def get_prediction_by_id(
         if prediction is None:
             raise HTTPException(status_code=404, detail=f"Prediction not found: {prediction_id}")
         return prediction
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/calibration", response_model=CalibrationData)
+async def get_calibration(
+    bins: int = Query(10, ge=1, le=100, description="Number of calibration bins (currently fixed at 10)"),
+    data_store: DataStore = Depends(get_data_store)
+) -> CalibrationData:
+    """
+    Get calibration data including Expected Calibration Error (ECE)
+    and reliability diagram bins.
+    
+    Note: bins parameter is accepted for API compatibility but currently
+    the data is pre-computed with 10 bins.
+    """
+    try:
+        return data_store.get_calibration()
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/export")
+async def export_predictions(
+    format: ExportFormat = Query(..., description="Export format: csv or jsonl"),
+    only_errors: bool = Query(False, description="Filter to only show incorrect predictions"),
+    true_label: Optional[str] = Query(None, description="Filter by true label"),
+    pred_label: Optional[str] = Query(None, description="Filter by predicted label"),
+    min_conf: Optional[float] = Query(None, ge=0, le=1, description="Minimum confidence"),
+    max_conf: Optional[float] = Query(None, ge=0, le=1, description="Maximum confidence"),
+    only_high_confidence_errors: bool = Query(False, description="Show only high confidence errors"),
+    sort: Optional[SortOrder] = Query(None, description="Sort order"),
+    data_store: DataStore = Depends(get_data_store)
+):
+    """
+    Export filtered predictions as CSV or JSONL.
+    
+    CSV includes: id, true_label, pred_label, confidence, error_type, image_url
+    JSONL includes full prediction records.
+    """
+    try:
+        predictions = data_store.get_filtered_predictions(
+            only_errors=only_errors,
+            true_label=true_label,
+            pred_label=pred_label,
+            min_conf=min_conf,
+            max_conf=max_conf,
+            only_high_confidence_errors=only_high_confidence_errors,
+            sort=sort
+        )
+        
+        if format == ExportFormat.CSV:
+            # Generate CSV
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["id", "true_label", "pred_label", "confidence", "error_type", "image_url"])
+            
+            for p in predictions:
+                error_type = "correct"
+                if not p.isCorrect:
+                    error_type = "high_conf_error" if p.isHighConfidenceError else "low_conf_error"
+                writer.writerow([
+                    p.id,
+                    p.trueLabel,
+                    p.predictedLabel,
+                    p.confidence,
+                    error_type,
+                    p.imageUrl
+                ])
+            
+            output.seek(0)
+            return StreamingResponse(
+                iter([output.getvalue()]),
+                media_type="text/csv",
+                headers={"Content-Disposition": "attachment; filename=predictions.csv"}
+            )
+        
+        else:  # JSONL
+            def generate_jsonl():
+                for p in predictions:
+                    yield json.dumps(p.model_dump()) + "\n"
+            
+            return StreamingResponse(
+                generate_jsonl(),
+                media_type="application/x-ndjson",
+                headers={"Content-Disposition": "attachment; filename=predictions.jsonl"}
+            )
+    
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   MetricCards,
   ConfusionMatrixDisplay,
@@ -8,6 +8,8 @@ import {
   FailureTable,
   SampleInspector
 } from '../components';
+import type { SliceSelection } from '../components/ConfusionMatrix';
+import ReliabilityDiagram from '../components/ReliabilityDiagram';
 import {
   getOverview,
   getConfusionMatrix,
@@ -47,6 +49,10 @@ export function Dashboard() {
     pageSize: 10,
     onlyErrors: true // Default to showing only errors
   });
+  
+  // Slice explorer state
+  const [activeSlice, setActiveSlice] = useState<SliceSelection | null>(null);
+  const failureTableRef = useRef<HTMLDivElement>(null);
 
   // Fetch overview data
   useEffect(() => {
@@ -116,6 +122,35 @@ export function Dashboard() {
   const handleSelectPrediction = (prediction: PredictionRecord) => {
     setSelectedPrediction(prediction);
   };
+  
+  // Handle confusion matrix cell click (slice explorer)
+  const handleSliceClick = (slice: SliceSelection) => {
+    setActiveSlice(slice);
+    setFilters(prev => ({
+      ...prev,
+      trueLabel: slice.trueLabel,
+      predictedLabel: slice.predLabel,
+      onlyErrors: true,
+      page: 1
+    }));
+    setSelectedPrediction(null);
+    
+    // Scroll to failure table
+    setTimeout(() => {
+      failureTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+  
+  // Clear slice selection
+  const handleClearSlice = () => {
+    setActiveSlice(null);
+    setFilters(prev => ({
+      ...prev,
+      trueLabel: undefined,
+      predictedLabel: undefined,
+      page: 1
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-zinc-900 text-zinc-100">
@@ -147,19 +182,39 @@ export function Dashboard() {
             Failure Patterns
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            <ConfusionMatrixDisplay data={confusionMatrix} loading={loadingMatrix} />
+            <ConfusionMatrixDisplay 
+              data={confusionMatrix} 
+              loading={loadingMatrix}
+              onCellClick={handleSliceClick}
+              activeSlice={activeSlice}
+            />
             <ConfidenceCurveChart data={confidenceCurve} loading={loadingCurve} />
             <ErrorsByClassChart data={errorsByClass} loading={loadingErrors} />
           </div>
         </section>
+        
+        {/* Section 2.5: Calibration / Reliability Diagram */}
+        <section>
+          <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500 mb-4">
+            Model Calibration
+          </h2>
+          <div className="max-w-2xl">
+            <ReliabilityDiagram />
+          </div>
+        </section>
 
         {/* Section 3 & 4: Failure Explorer + Sample Inspector */}
-        <section>
+        <section ref={failureTableRef}>
           <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500 mb-4">
             Failure Explorer
           </h2>
           
-          <FiltersBar filters={filters} onFilterChange={handleFilterChange} />
+          <FiltersBar 
+            filters={filters} 
+            onFilterChange={handleFilterChange}
+            activeSlice={activeSlice}
+            onClearSlice={handleClearSlice}
+          />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Table takes 2 columns */}

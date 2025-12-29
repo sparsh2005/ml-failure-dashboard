@@ -35,6 +35,7 @@ This will:
   - `confusion_matrix.json` - 10x10 confusion matrix
   - `confidence_curve.json` - Accuracy per confidence bin
   - `errors_by_class.json` - Error distribution by class
+  - `calibration.json` - Reliability bins and ECE (Expected Calibration Error)
   - `predictions.jsonl` - All 10,000 prediction records
 - Save test images to `app/static/images/test/` (use `--no-images` to skip)
 
@@ -59,6 +60,8 @@ The API will be available at:
 | `GET /api/errors-by-class` | Error distribution by class |
 | `GET /api/predictions` | Paginated predictions with filters |
 | `GET /api/predictions/{id}` | Single prediction by ID |
+| `GET /api/calibration` | Reliability diagram data with ECE |
+| `GET /api/export` | Export predictions as CSV or JSONL |
 
 ### Query Parameters for `/api/predictions`
 
@@ -73,6 +76,27 @@ The API will be available at:
 | `page` | int | Page number (default: 1) |
 | `page_size` | int | Items per page (default: 10, max: 100) |
 | `sort` | string | `confidence_desc` or `confidence_asc` |
+
+### Query Parameters for `/api/calibration`
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `bins` | int | Number of calibration bins (default: 10) |
+
+### Query Parameters for `/api/export`
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `format` | string | **Required.** `csv` or `jsonl` |
+| `only_errors` | bool | Filter to errors only |
+| `only_high_confidence_errors` | bool | Filter to dangerous errors |
+| `true_label` | string | Filter by true label |
+| `pred_label` | string | Filter by predicted label |
+| `min_conf` | float | Minimum confidence (0-1) |
+| `max_conf` | float | Maximum confidence (0-1) |
+| `sort` | string | `confidence_desc` or `confidence_asc` |
+
+**CSV columns:** `id, true_label, pred_label, confidence, error_type, image_url`
 
 ## Project Structure
 
@@ -135,4 +159,34 @@ To use real backend data instead of mocks, update the frontend `.env`:
 VITE_USE_MOCKS=false
 VITE_API_BASE=http://localhost:8000
 ```
+
+## New Features (v2)
+
+### 1. Calibration / Reliability Diagram
+
+The dashboard now includes a **Reliability Diagram** showing model calibration:
+- **ECE (Expected Calibration Error)**: Measures how well confidence scores match actual accuracy
+- **Bins**: Shows average confidence vs accuracy per bin
+- Lower ECE = better calibrated model
+
+### 2. Slice Explorer
+
+Click on any cell in the **Confusion Matrix** to explore that specific error slice:
+- Clicking a cell (e.g., true=cat, pred=dog) sets filters automatically
+- A **slice chip** appears showing the active slice (e.g., "cat → dog")
+- Click the ✕ on the chip to clear the slice
+- The Failure Table scrolls into view and refreshes with the filtered results
+
+### 3. Export
+
+Export filtered predictions directly from the dashboard:
+- Click the **Export** button in the Filters Bar
+- Choose **CSV** or **JSONL** format
+- Exports respect current filters (slice, confidence range, error types)
+
+### 4. Overconfident Errors Toggle
+
+The "Only Confident Wrong" checkbox highlights the dashboard's killer feature:
+- Shows predictions where confidence ≥ 0.8 but the model was wrong
+- These are the most dangerous errors in production
 

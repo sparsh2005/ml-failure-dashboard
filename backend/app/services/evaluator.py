@@ -429,6 +429,47 @@ def generate_artifacts(
     with open(output_dir / "labels.json", 'w') as f:
         json.dump(CIFAR10_LABELS, f, indent=2)
     
+    # 7. calibration.json - Reliability diagram data with ECE
+    print("Saving calibration.json...")
+    num_calibration_bins = 10
+    calibration_bins = []
+    ece = 0.0
+    
+    for b in range(num_calibration_bins):
+        bin_min = b / num_calibration_bins
+        bin_max = (b + 1) / num_calibration_bins
+        
+        # Find samples in this confidence bin
+        bin_samples = [
+            p for p in predictions_data 
+            if (bin_min <= p['confidence'] < bin_max) or 
+               (bin_max == 1.0 and p['confidence'] == 1.0 and b == num_calibration_bins - 1)
+        ]
+        
+        count = len(bin_samples)
+        if count > 0:
+            avg_conf = np.mean([p['confidence'] for p in bin_samples])
+            acc = np.mean([1 if p['isCorrect'] else 0 for p in bin_samples])
+            # ECE contribution: |acc - conf| * (count / total)
+            ece += abs(acc - avg_conf) * (count / num_samples)
+        else:
+            avg_conf = (bin_min + bin_max) / 2
+            acc = 0.0
+        
+        calibration_bins.append({
+            "range": [round(bin_min, 2), round(bin_max, 2)],
+            "count": count,
+            "avgConf": round(float(avg_conf), 4),
+            "accuracy": round(float(acc), 4)
+        })
+    
+    calibration_data = {
+        "ece": round(float(ece), 4),
+        "bins": calibration_bins
+    }
+    with open(output_dir / "calibration.json", 'w') as f:
+        json.dump(calibration_data, f, indent=2)
+    
     print("\n===== Artifact Generation Complete =====")
     print(f"Accuracy: {accuracy*100:.2f}%")
     print(f"Total Failures: {total_failures}")
