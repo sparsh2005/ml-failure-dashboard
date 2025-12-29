@@ -1,56 +1,172 @@
-# ML Failure Analysis Dashboard - Backend
+# ML Failure Analysis Dashboard
 
-FastAPI backend that serves model evaluation artifacts for the ML Failure Analysis Dashboard.
+> **Live Demo:** [Your Vercel URL here]
 
-## Quick Start
+A dashboard for analyzing ML model failures, with a focus on identifying dangerous high-confidence errors. Built with React + TypeScript (frontend) and FastAPI (backend).
 
-### 1. Setup Environment
+Built for the [Internship Name] application to demonstrate production-grade ML debugging tools.
 
+## 🎯 What to Look At
+
+This dashboard's killer feature: **finding high-confidence wrong predictions** — the most dangerous errors in production.
+
+### Screenshot 1: Overview + Confusion Matrix
+![Overview](./docs/overview.png)
+- Model achieves ~88% accuracy on CIFAR-10
+- **4.7% of predictions are high-confidence but wrong** (the red danger zone)
+- Confusion matrix shows cat↔dog and automobile↔truck are major confusion pairs
+
+### Screenshot 2: High Confidence Wrong Filter
+![Confident Wrong](./docs/confident-wrong.png)
+- Click "Only Confident Wrong" checkbox to reveal the killer feature
+- These are predictions where the model is ≥80% confident but completely wrong
+- Notice the confidence scores: 0.85, 0.91, 0.93 — dangerously overconfident
+
+### Screenshot 3: Sample Inspector
+![Inspector](./docs/inspector.png)
+- Click any row to inspect in detail
+- See the full top-3 predictions and confidence breakdown
+- Actual image from CIFAR-10 test set shown
+
+### Screenshot 4: Reliability Diagram + Slice Explorer
+![Calibration](./docs/calibration.png)
+- **ECE (Expected Calibration Error)**: 4.23% — shows model is fairly well calibrated
+- Click confusion matrix cells to explore specific error slices (e.g., "cat → dog")
+- Export filtered predictions as CSV/JSONL for deeper analysis
+
+---
+
+## 🚀 Quick Start (Local Development)
+
+### Option 1: Frontend Only (Mock Data)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open http://localhost:5173 - uses mock data by default.
+
+### Option 2: Full Stack (Real Backend)
+
+**Terminal 1 - Backend:**
 ```bash
 cd backend
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
-```
-
-### 2. Generate Artifacts (Train & Evaluate CIFAR-10 Model)
-
-```bash
-# Run the evaluator to train a CNN and generate all dashboard artifacts
-python -m app.services.evaluator
-
-# Options:
-#   --epochs 3           Training epochs (default: 3)
-#   --seed 42            Random seed for reproducibility (default: 42)
-#   --no-images          Skip saving test images (faster, use if images exist)
-#   --output-dir PATH    Custom output directory for artifacts
-```
-
-This will:
-- Train a SimpleCNN on CIFAR-10 (~70% accuracy in 3 epochs)
-- Evaluate on the test set (10,000 images)
-- Generate artifacts in `app/data/`:
-  - `labels.json` - CIFAR-10 class labels
-  - `overview.json` - Model metrics & failure breakdown
-  - `confusion_matrix.json` - 10x10 confusion matrix
-  - `confidence_curve.json` - Accuracy per confidence bin
-  - `errors_by_class.json` - Error distribution by class
-  - `calibration.json` - Reliability bins and ECE (Expected Calibration Error)
-  - `predictions.jsonl` - All 10,000 prediction records
-- Save test images to `app/static/images/test/` (use `--no-images` to skip)
-
-### 3. Start the API Server
-
-```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-The API will be available at:
-- **API Root**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/health
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-## API Endpoints
+Then create `frontend/.env.local`:
+```env
+VITE_USE_MOCKS=false
+VITE_API_BASE=http://localhost:8000
+```
+
+## 📦 Production Deployment (Real Data)
+
+> 📖 **Detailed deployment guide:** See [DEPLOYMENT.md](./DEPLOYMENT.md) for step-by-step instructions.
+
+### Step 1: Deploy Backend to Railway
+
+**Why Railway?** Free tier, easy Python deployment, persistent storage.
+
+1. **Create account** at [railway.app](https://railway.app)
+
+2. **Install Railway CLI:**
+   ```bash
+   npm i -g @railway/cli
+   railway login
+   ```
+
+3. **Deploy backend:**
+   ```bash
+   cd backend
+   railway init
+   railway up
+   ```
+
+4. **Set environment variables** in Railway Dashboard:
+   - Add your domain to CORS if needed
+   
+5. **Get your backend URL:** e.g., `https://ml-dashboard-backend.up.railway.app`
+
+### Step 2: Deploy Frontend to Vercel
+
+1. **Install Vercel CLI:**
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **Deploy frontend:**
+   ```bash
+   cd frontend
+   vercel --prod
+   ```
+
+3. **Set environment variables** in Vercel Dashboard:
+   - `VITE_USE_MOCKS` = `false`
+   - `VITE_API_BASE` = `https://your-railway-url.railway.app`
+
+4. **Redeploy** to apply env vars:
+   ```bash
+   vercel --prod
+   ```
+
+### Alternative: Render (Backend)
+
+If you prefer [render.com](https://render.com):
+1. Connect your GitHub repo
+2. Create a new Web Service
+3. Build command: `pip install -r requirements.txt`
+4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+5. Add environment variables if needed
+
+## 🛠 Features
+
+### Core
+- **Model Overview** - Accuracy, precision, recall, F1, confidence breakdown
+- **Confusion Matrix** - Clickable cells to explore error slices
+- **Confidence Curve** - Accuracy vs confidence buckets
+- **Errors by Class** - Bar chart of error distribution
+
+### v2 Features
+- **Reliability Diagram** - Model calibration with ECE (Expected Calibration Error)
+- **Slice Explorer** - Click confusion matrix cells to filter to specific misclassifications
+- **Export** - Download filtered predictions as CSV or JSONL
+- **Overconfident Errors Toggle** - Highlight dangerous high-confidence mistakes
+
+## 📁 Project Structure
+
+```
+ml-failure-dashboard/
+├── frontend/                 # React + TypeScript + Vite
+│   ├── src/
+│   │   ├── api/             # API client & types
+│   │   ├── components/      # React components
+│   │   └── pages/           # Dashboard page
+│   ├── vercel.json          # Vercel config
+│   └── package.json
+│
+├── backend/                  # FastAPI
+│   ├── app/
+│   │   ├── api/routes.py    # API endpoints
+│   │   ├── data/            # JSON artifacts
+│   │   ├── models/          # Pydantic schemas
+│   │   └── services/        # Data store & evaluator
+│   └── requirements.txt
+│
+└── README.md
+```
+
+## 🔗 API Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
@@ -63,130 +179,87 @@ The API will be available at:
 | `GET /api/calibration` | Reliability diagram data with ECE |
 | `GET /api/export` | Export predictions as CSV or JSONL |
 
-### Query Parameters for `/api/predictions`
+## 🧠 Generate Real Data (CIFAR-10)
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `only_errors` | bool | Filter to errors only |
-| `only_high_confidence_errors` | bool | Filter to dangerous errors (conf ≥ 0.8 & wrong) |
-| `true_label` | string | Filter by true label |
-| `pred_label` | string | Filter by predicted label |
-| `min_conf` | float | Minimum confidence (0-1) |
-| `max_conf` | float | Maximum confidence (0-1) |
-| `page` | int | Page number (default: 1) |
-| `page_size` | int | Items per page (default: 10, max: 100) |
-| `sort` | string | `confidence_desc` or `confidence_asc` |
-
-### Query Parameters for `/api/calibration`
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `bins` | int | Number of calibration bins (default: 10) |
-
-### Query Parameters for `/api/export`
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `format` | string | **Required.** `csv` or `jsonl` |
-| `only_errors` | bool | Filter to errors only |
-| `only_high_confidence_errors` | bool | Filter to dangerous errors |
-| `true_label` | string | Filter by true label |
-| `pred_label` | string | Filter by predicted label |
-| `min_conf` | float | Minimum confidence (0-1) |
-| `max_conf` | float | Maximum confidence (0-1) |
-| `sort` | string | `confidence_desc` or `confidence_asc` |
-
-**CSV columns:** `id, true_label, pred_label, confidence, error_type, image_url`
-
-## Project Structure
-
-```
-backend/
-├── app/
-│   ├── api/
-│   │   └── routes.py       # API endpoints
-│   ├── data/               # Generated artifacts (JSON)
-│   ├── models/
-│   │   └── schemas.py      # Pydantic models
-│   ├── services/
-│   │   ├── data_store.py   # Data loading & caching
-│   │   └── evaluator.py    # CIFAR-10 model training & evaluation
-│   ├── static/
-│   │   └── images/test/    # Test images (generated)
-│   └── main.py             # FastAPI app
-├── requirements.txt
-└── README.md
-```
-
-## Development
-
-### Using Mock Data
-
-If you want to skip training and use pre-generated mock data:
-
-1. The repo includes sample data files in `app/data/`
-2. Just start the server: `uvicorn app.main:app --reload`
-
-### Regenerating Artifacts
-
-To regenerate artifacts with different settings:
+**Before deploying, generate real evaluation artifacts:**
 
 ```bash
-# Quick evaluation (fewer epochs, lower accuracy but faster)
-python -m app.services.evaluator --epochs 1
+cd backend
+source venv/bin/activate
 
-# Higher accuracy (more epochs)
-python -m app.services.evaluator --epochs 5
+# Install dependencies (if not done)
+pip install -r requirements.txt
 
-# Skip image saving (faster if images already exist)
-python -m app.services.evaluator --no-images
-
-# Different random seed
-python -m app.services.evaluator --seed 123
+# Train model and generate artifacts (~5-10 minutes)
+python -m app.services.evaluator --epochs 3 --seed 42
 ```
 
-**Note:** The model uses `conf_threshold=0.8` to label `isHighConfidenceError` (predictions where confidence ≥ 0.8 but wrong).
+This will:
+- ✅ Train a SimpleCNN on CIFAR-10 (reaches ~65-75% accuracy)
+- ✅ Evaluate on 10,000 test images
+- ✅ Generate all JSON artifacts in `app/data/`
+- ✅ Save test images to `app/static/images/test/`
+- ✅ Compute calibration (ECE) and reliability diagram data
 
-## Connecting to Frontend
+**Note:** Use `--epochs 5` for better accuracy (~80%) but takes longer.
 
-The backend includes CORS headers for:
-- `http://localhost:5173` (Vite default)
-- `http://localhost:5174` (Vite alternate)
+## 📸 Taking Screenshots for README
 
-To use real backend data instead of mocks, update the frontend `.env`:
+After running the app locally with real data:
 
-```env
-VITE_USE_MOCKS=false
-VITE_API_BASE=http://localhost:8000
-```
+1. **Screenshot 1 (Overview + Confusion Matrix):**
+   - Open http://localhost:5173
+   - Capture the top section with metrics cards and confusion matrix
+   - Save as `docs/overview.png`
 
-## New Features (v2)
+2. **Screenshot 2 (High Confidence Wrong):**
+   - Check the "Only Confident Wrong" checkbox in filters
+   - Click "Apply"
+   - Capture the failure table showing confident-wrong predictions
+   - Save as `docs/confident-wrong.png`
 
-### 1. Calibration / Reliability Diagram
+3. **Screenshot 3 (Sample Inspector):**
+   - Click on any row in the failure table
+   - Capture the right panel showing image + predictions
+   - Save as `docs/inspector.png`
 
-The dashboard now includes a **Reliability Diagram** showing model calibration:
-- **ECE (Expected Calibration Error)**: Measures how well confidence scores match actual accuracy
-- **Bins**: Shows average confidence vs accuracy per bin
-- Lower ECE = better calibrated model
+4. **Screenshot 4 (Calibration):**
+   - Scroll down to "Model Calibration" section
+   - Capture the reliability diagram with ECE value
+   - Save as `docs/calibration.png`
 
-### 2. Slice Explorer
+**Tip:** Use a clean browser window, zoom to 100%, and capture in light mode for best visibility.
 
-Click on any cell in the **Confusion Matrix** to explore that specific error slice:
-- Clicking a cell (e.g., true=cat, pred=dog) sets filters automatically
-- A **slice chip** appears showing the active slice (e.g., "cat → dog")
-- Click the ✕ on the chip to clear the slice
-- The Failure Table scrolls into view and refreshes with the filtered results
+## ✅ Deployment Checklist
 
-### 3. Export
+Before sharing with interviewers:
 
-Export filtered predictions directly from the dashboard:
-- Click the **Export** button in the Filters Bar
-- Choose **CSV** or **JSONL** format
-- Exports respect current filters (slice, confidence range, error types)
+- [ ] Generate real data: `python -m app.services.evaluator --epochs 3`
+- [ ] Take 4 screenshots and add to `docs/` folder
+- [ ] Deploy backend to Railway/Render
+- [ ] Deploy frontend to Vercel with backend URL
+- [ ] Test deployed app works with real data
+- [ ] Update README with live demo URL
+- [ ] Commit screenshots to GitHub
+- [ ] Test all features work in production:
+  - [ ] High confidence wrong filter
+  - [ ] Confusion matrix clicking
+  - [ ] Export CSV/JSONL
+  - [ ] Calibration diagram loads
 
-### 4. Overconfident Errors Toggle
+## 🎓 Built For
 
-The "Only Confident Wrong" checkbox highlights the dashboard's killer feature:
-- Shows predictions where confidence ≥ 0.8 but the model was wrong
-- These are the most dangerous errors in production
+This project was built as part of my application to [Internship Name]. It demonstrates:
+- Full-stack development (React + FastAPI)
+- ML/AI debugging and observability
+- Production deployment (Vercel + Railway)
+- Clean code architecture and documentation
 
+**Tech Stack:**
+- **Frontend:** React, TypeScript, Vite, TailwindCSS, Recharts
+- **Backend:** FastAPI, Pydantic, PyTorch, scikit-learn
+- **Deployment:** Vercel (frontend), Railway (backend)
+
+## 📝 License
+
+MIT

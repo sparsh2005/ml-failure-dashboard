@@ -13,17 +13,29 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS for frontend development
+# Configure CORS for frontend development and production
+import os
+
+# Allow all origins in production for easier deployment
+# In production, you'd want to restrict this to your specific Vercel domain
+allowed_origins = [
+    "http://localhost:5173",  # Vite default
+    "http://localhost:5174",  # Vite alternate
+    "http://localhost:3000",  # Common React port
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+]
+
+# Add production origins from environment variable if set
+if production_origins := os.getenv("ALLOWED_ORIGINS"):
+    allowed_origins.extend(production_origins.split(","))
+
+# For demo purposes, allow all Vercel deployments
+# In production, replace "*" with your specific domain
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Vite default
-        "http://localhost:5174",  # Vite alternate
-        "http://localhost:3000",  # Common React port
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins for demo (change in production)
+    allow_credentials=False,  # Must be False when allow_origins is "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
