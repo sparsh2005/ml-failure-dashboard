@@ -8,8 +8,14 @@ venv/
 node_modules/
 dist/
 
-# Artifacts (optional)
+# Large data files (CIFAR-10 dataset)
+backend/data/
+*.tar.gz
+
+# Generated images (can be regenerated)
 backend/app/static/images/
+
+# Artifacts (optional)
 backend/app/artifacts/*.json
 backend/app/artifacts/*.jsonl
 
