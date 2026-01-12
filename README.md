@@ -1,10 +1,10 @@
 # ML Failure Analysis Dashboard
 
-> **Live Demo:** [Your Vercel URL here]
+> **Live Demo:** https://ml-failure-dashboard.vercel.app (uses mock data)
 
 A dashboard for analyzing ML model failures, with a focus on identifying dangerous high-confidence errors. Built with React + TypeScript (frontend) and FastAPI (backend).
 
-Built for the [Internship Name] application to demonstrate production-grade ML debugging tools.
+**Full backend with real CIFAR-10 evaluation available locally** (see Quick Start below).
 
 ## 🎯 What to Look At
 
@@ -70,64 +70,14 @@ VITE_USE_MOCKS=false
 VITE_API_BASE=http://localhost:8000
 ```
 
-## 📦 Production Deployment (Real Data)
+## 📦 Deployment
 
-> 📖 **Detailed deployment guide:** See [DEPLOYMENT.md](./DEPLOYMENT.md) for step-by-step instructions.
+The live demo at https://ml-failure-dashboard.vercel.app uses mock data for demonstration purposes.
 
-### Step 1: Deploy Backend to Railway
-
-**Why Railway?** Free tier, easy Python deployment, persistent storage.
-
-1. **Create account** at [railway.app](https://railway.app)
-
-2. **Install Railway CLI:**
-   ```bash
-   npm i -g @railway/cli
-   railway login
-   ```
-
-3. **Deploy backend:**
-   ```bash
-   cd backend
-   railway init
-   railway up
-   ```
-
-4. **Set environment variables** in Railway Dashboard:
-   - Add your domain to CORS if needed
-   
-5. **Get your backend URL:** e.g., `https://ml-dashboard-backend.up.railway.app`
-
-### Step 2: Deploy Frontend to Vercel
-
-1. **Install Vercel CLI:**
-   ```bash
-   npm i -g vercel
-   ```
-
-2. **Deploy frontend:**
-   ```bash
-   cd frontend
-   vercel --prod
-   ```
-
-3. **Set environment variables** in Vercel Dashboard:
-   - `VITE_USE_MOCKS` = `false`
-   - `VITE_API_BASE` = `https://your-railway-url.railway.app`
-
-4. **Redeploy** to apply env vars:
-   ```bash
-   vercel --prod
-   ```
-
-### Alternative: Render (Backend)
-
-If you prefer [render.com](https://render.com):
-1. Connect your GitHub repo
-2. Create a new Web Service
-3. Build command: `pip install -r requirements.txt`
-4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-5. Add environment variables if needed
+To deploy with real backend:
+1. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions
+2. Backend can be deployed to Railway, Render, or Fly.io
+3. Frontend deployed to Vercel with backend URL as environment variable
 
 ## 🛠 Features
 
@@ -203,53 +153,11 @@ This will:
 
 **Note:** Use `--epochs 5` for better accuracy (~80%) but takes longer.
 
-## 📸 Taking Screenshots for README
+---
 
-After running the app locally with real data:
+## 🎓 About This Project
 
-1. **Screenshot 1 (Overview + Confusion Matrix):**
-   - Open http://localhost:5173
-   - Capture the top section with metrics cards and confusion matrix
-   - Save as `docs/overview.png`
-
-2. **Screenshot 2 (High Confidence Wrong):**
-   - Check the "Only Confident Wrong" checkbox in filters
-   - Click "Apply"
-   - Capture the failure table showing confident-wrong predictions
-   - Save as `docs/confident-wrong.png`
-
-3. **Screenshot 3 (Sample Inspector):**
-   - Click on any row in the failure table
-   - Capture the right panel showing image + predictions
-   - Save as `docs/inspector.png`
-
-4. **Screenshot 4 (Calibration):**
-   - Scroll down to "Model Calibration" section
-   - Capture the reliability diagram with ECE value
-   - Save as `docs/calibration.png`
-
-**Tip:** Use a clean browser window, zoom to 100%, and capture in light mode for best visibility.
-
-## ✅ Deployment Checklist
-
-Before sharing with interviewers:
-
-- [ ] Generate real data: `python -m app.services.evaluator --epochs 3`
-- [ ] Take 4 screenshots and add to `docs/` folder
-- [ ] Deploy backend to Railway/Render
-- [ ] Deploy frontend to Vercel with backend URL
-- [ ] Test deployed app works with real data
-- [ ] Update README with live demo URL
-- [ ] Commit screenshots to GitHub
-- [ ] Test all features work in production:
-  - [ ] High confidence wrong filter
-  - [ ] Confusion matrix clicking
-  - [ ] Export CSV/JSONL
-  - [ ] Calibration diagram loads
-
-## 🎓 Built For
-
-This project was built as part of my application to [Internship Name]. It demonstrates:
+This dashboard demonstrates:
 - Full-stack development (React + FastAPI)
 - ML/AI debugging and observability
 - Production deployment (Vercel + Railway)
@@ -258,7 +166,7 @@ This project was built as part of my application to [Internship Name]. It demons
 **Tech Stack:**
 - **Frontend:** React, TypeScript, Vite, TailwindCSS, Recharts
 - **Backend:** FastAPI, Pydantic, PyTorch, scikit-learn
-- **Deployment:** Vercel (frontend), Railway (backend)
+- **Deployment:** Vercel (frontend with mock data)
 
 ## 📝 License
 
