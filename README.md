@@ -6,6 +6,9 @@ A dashboard for analyzing ML model failures, with a focus on identifying dangero
 
 **Full backend with real CIFAR-10 evaluation available locally** (see Quick Start below).
 
+## Why this exists?
+Accuracy hides dangerous failure modes. This project focuses on identifying systematic confusions and overconfident errors in ML classifiers before deployment.
+
 ## 🎯 What to Look At
 
 This dashboard's killer feature: **finding high-confidence wrong predictions** — the most dangerous errors in production.
